@@ -32,7 +32,7 @@ Genera recomendaciones de gran relevancia utilizando técnicas de [Deep Learning
 
 ## Y...¿Como Funciona?
 
-!["aws_personalize"](Imagen/Blog_Personalize.png) Fig. 1 Funcionamiento Amazon Personalize. 
+!["aws_personalize"](Imagen/Blog_Personalize.png) 
 
 1. Debes proporcionar datos sobre usuarios y elementos para realizar la personalización.
 
@@ -95,7 +95,7 @@ Los pasos a seguir para llevar a cabo este proyecto son:
 
 ## Paso 1: Descargar datos de Kaggle.
 
-El [01_Descarga_Dataset.ipynb]( ) para descargar los datos de [Recommendation Database 2020](https://www.kaggle.com/datasets/hernan4444/anime-recommendation-database-2020) de [kaggle](https://www.kaggle.com/):
+El [01_Descarga_Dataset.ipynb](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/01_Descarga_Dataset.ipynb) para descargar los datos de [Recommendation Database 2020](https://www.kaggle.com/datasets/hernan4444/anime-recommendation-database-2020) de [kaggle](https://www.kaggle.com/):
 
 ```python 
 !pip3 install kaggle
@@ -108,7 +108,7 @@ Una vez descargados los puedes explorar en el notebook [02_Exploracion_Prepariac
 
 ## Paso 2: Crear un DataSet Group
 
-El Dataset Group (Fig.2) es donde están todos los recursos (no solo los datasets). Puedes crear varios Dataset Groups y tus modelos no se van topar entre sí.
+El Dataset Group es donde están todos los recursos (no solo los datasets). Puedes crear varios Dataset Groups y tus modelos no se van topar entre sí.
 
 Por ejemplo, es posible que tenga una aplicación que proporciona recomendaciones para la transmisión de vídeo y otra que recomienda libros de audio. 
 
@@ -138,7 +138,7 @@ Para el recomendador de anime utilizaremos dos conjuntos de datos:
 
 *Interaction DataSet*
 
-Lo creamos procesando a *anime.csv* y *rating_complete* en el notebook [02_Exploracion_Prepariacion.ipynb]( )
+Lo creamos procesando a *anime.csv* y *rating_complete* en el notebook [02_Exploracion_Prepariacion.ipynb](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/02_Exploracion_Prepariacion.ipynb)
 
 Podemos ver que costa de 5 columnas 3 de ellas requeridas: 
 
@@ -191,7 +191,7 @@ create_schema_response = personalize.create_schema(
 
 *Items DataSet*
 
-Lo creamos procesando a *item-meta.csv* el notebook  [*02_Exploracion_Prepariacion.ipynb*]( )
+Lo creamos procesando a *item-meta.csv* el notebook  [*02_Exploracion_Prepariacion.ipynb*](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/02_Exploracion_Prepariacion.ipynb)
 
 * ITEM_ID (ID del anime - Requerido)
 * STUDIOS (estudio que lo creo - Opcional)
@@ -264,7 +264,7 @@ create_dataset_import_job_response = personalize.create_dataset_import_job(
 dataset_import_job_arn = create_dataset_import_job_response['datasetImportJobArn']
 ```
 
-El código completo lo pedes ver en el notebook [02_Exploracion_Prepariacion.ipynb]( ). 
+El código completo lo pedes ver en el notebook [02_Exploracion_Prepariacion.ipynb](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/02_Exploracion_Prepariacion.ipynb). 
 
 ## Paso 5: Creación de la solución
 
@@ -272,7 +272,7 @@ La solución hace referencia a la combinación de una receta de Amazon Personali
 
 Una vez creada la Version Solution, la solución con mejor desempeño, creas la campaña y obtienes las recomendaciones.
 
-En nuestro repo de GitHub la solución la creamos en el notebook [03_Creacion_Soluciones.ipynb]( )
+En nuestro repo de GitHub la solución la creamos en el notebook [03_Creacion_Soluciones.ipynb](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/03_Creacion_Soluciones.ipynb)
 
 Sigue lo siguiente para crear las soluciones:
 
@@ -368,7 +368,7 @@ Más Información: [https://boto3.amazonaws.com/v1/documentation/api/latest/refe
 
 ## Paso 6: Crear un endpoint de inferencias (Campaña)
 
-Seleccionada la Version Solution con el mejor desempeño creamos la campaña para cada recipe y las desplegamos ejecutando el [04_Desplegando_campanas.ipynb]( ). 
+Seleccionada la Version Solution con el mejor desempeño creamos la campaña para cada recipe y las desplegamos ejecutando el [04_Desplegando_campanas.ipynb](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/04_Desplegando_campanas.ipynb). 
 
 Las lineas que crean la campañas son: 
  
@@ -389,7 +389,7 @@ Amazon Personalize puede hacer recomendaciones basadas en tiempo real, solo con 
 
 Debemos crear el Event Tracker para que Amazon Personalize pueda aprender de la actividad más reciente del los usuario y actualizar las recomendaciones mientras utilizan la aplicación, mantiene los datos de interacciones actualizados y mejora la relevancia de las recomendaciones.
 
-En el notebook [05_Probando_Recomendaciones.ipynb]( ) lo hacemos con esta lineas de comandos:
+En el notebook [05_Probando_Recomendaciones.ipynb](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/05_Probando_Recomendaciones.ipynb) lo hacemos con esta lineas de comandos:
 
 
 
@@ -414,7 +414,7 @@ createfilter_response = personalize.create_filter(
 
 ## Paso 9: Resultados
 
-Para ver los resultados trabajamos el notebook [05_Probando_Recomendaciones](https://github.com/elizabethfuentes12/AWS_personalize_RecomendadorDeAnime/blob/main/05_Probando_Recomendaciones.ipynb), donde puedes ver los siguientes resultados.. y además crear los tuyos. 
+Para ver los resultados trabajamos el notebook [05_Probando_Recomendaciones](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/05_Probando_Recomendaciones.ipynb), donde puedes ver los siguientes resultados.. y además crear los tuyos. 
 
 ***Similar Items (SIMS)***
 
@@ -431,7 +431,7 @@ Para ver los resultados trabajamos el notebook [05_Probando_Recomendaciones](htt
 
 ## Paso 10: Borrar los recursos de la cuenta de AWS.
 
-Si ya terminaste de explorar los resultados del Recomendador de Anime, puedes limpiar los recursos de la cuenta de AWS siguiendo los pasos en el notebook [06_Clean_Up_Resources.ipynb]( ). 
+Si ya terminaste de explorar los resultados del Recomendador de Anime, puedes limpiar los recursos de la cuenta de AWS siguiendo los pasos en el notebook [06_Clean_Up_Resources.ipynb](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/06_Clean_Up_Resources.ipynb). 
 
 
 # Fuentes adicionales
