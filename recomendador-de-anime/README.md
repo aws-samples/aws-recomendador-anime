@@ -2,12 +2,12 @@
 
 !["aws_personalize"](Imagen/personalize-logo.png)
 
-1. [Descarga de Dataset Kaggle]( )
-2. [Exploracion y Preparación]( )
-3. [Crear las soluciones]( )
-4. [Despliegue de Campañas]( )
-5. [Probar Recomendaciones]( )
-6. [Limpiar el proyecto]( )
+1. [Descarga de Dataset Kaggle](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/01_Descarga_Dataset.ipynb)
+2. [Exploracion y Preparación](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/02_Exploracion_Prepariacion.ipynb)
+3. [Crear las soluciones](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/03_Creacion_Soluciones.ipynb)
+4. [Despliegue de Campañas](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/04_Desplegando_campanas.ipynb)
+5. [Probar Recomendaciones](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/05_Probando_Recomendaciones.ipynb)
+6. [Limpiar el proyecto](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/06_Clean_Up_Resources.ipynb)
 
 ## Introducción
 
@@ -76,7 +76,8 @@ Para realizar proyecto, debe tener los siguientes requisitos previos:
 * Conocimientos en Python. 
 
 
-!["aws_personalize"](Imagen/Blog_Personalize-Page-2.png) Fig. 2 Recursos de Amazon Personalize. 
+!["aws_personalize"](Imagen/Blog_Personalize-Page-2.png) 
+
 
 Los pasos a seguir para llevar a cabo este proyecto son:
 

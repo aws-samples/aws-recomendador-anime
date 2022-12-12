@@ -3,7 +3,7 @@
 En este Repo vas a encontrar el codigo necesario para crear una aplicación para recomendar Anime. 
 
 Esta dividido en 3 partes: 
-- [recomendaor-de-anime]( ): Te explicaré como crear una recomendador de anime utilizando [Amazon Personalize](https://aws.amazon.com/es/personalize/). 
+- [recomendaor-de-anime](https://github.com/aws-samples/aws-recomendador-anime/tree/main/recomendador-de-anime): Te explicaré como crear una recomendador de anime utilizando [Amazon Personalize](https://aws.amazon.com/es/personalize/). 
 - [rest-api]( ): Aprenderás como crear una API para poder invocar al recomendador de Anime utilizando [Amazon API Gateway](https://aws.amazon.com/es/api-gateway/) y [AWS Lambda](https://aws.amazon.com/es/lambda). 
 - [application-react]( ): Con todo lo desarrollado en las partes anteriores vamos a crear una aplicación que realice recomendaciones de anime en tiempo real. 
 
