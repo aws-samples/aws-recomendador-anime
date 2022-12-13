@@ -1,0 +1,72 @@
+{
+  "STACK_NAME": "personalize-api",
+  "REGION": "us-west-2",
+  "RESOURCE_TAGS": {
+    "APLICACION": "personalize-api",
+    "AMBIENTE": "dev",
+    "GROUP": "poc-madness"
+  },
+  "USE_ACCOUNT_PERSONALIZE_RESOURCES": false,
+  "APIS": [
+    {
+      "CAMPAIGN_ARN": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:campaign/personalize-anime-SIMS",
+      "API_NAME": "personalize-anime-sims",
+      "CAMPAIGN_TYPE": "sims"
+    },
+    {
+      "CAMPAIGN_ARN": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:campaign/personalize-anime-rerank",
+      "API_NAME": "personalize-anime-rerank",
+      "CAMPAIGN_TYPE": "rerank"
+    },
+    {
+      "CAMPAIGN_ARN": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:campaign/personalize-anime-userpersonalization",
+      "API_NAME": "personalize-anime-userpersonalization",
+      "CAMPAIGN_TYPE": "recommend"
+    }
+  ],
+  "EVENT_TRACKERS": [
+    {
+      "TRACKING_ID": "aad266f0-18b1-4eae-a00e-93a130e6b9d1",
+      "TRACKER_ARN": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:event-tracker/06da600b",
+      "API_NAME": "animetracker"
+    }
+  ],
+  "FILTERS": [
+    {
+      "name": "Drama",
+      "filterArn": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:filter/Drama"
+    },
+    {
+      "name": "Music",
+      "filterArn": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:filter/Music"
+    },
+    {
+      "name": "Sci-Fi",
+      "filterArn": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:filter/Sci-Fi"
+    },
+    {
+      "name": "Shounen",
+      "filterArn": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:filter/Shounen"
+    },
+    {
+      "name": "Fantasy",
+      "filterArn": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:filter/Fantasy"
+    },
+    {
+      "name": "Action",
+      "filterArn": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:filter/Action"
+    },
+    {
+      "name": "Comedy",
+      "filterArn": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:filter/Comedy"
+    },
+    {
+      "name": "Adventure",
+      "filterArn": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:filter/Adventure"
+    },
+    {
+      "name": "Kids",
+      "filterArn": "arn:aws:personalize:us-west-2:xxxxxxxxxxxx:filter/Kids"
+    }
+  ]
+}
