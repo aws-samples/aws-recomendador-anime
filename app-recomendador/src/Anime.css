@@ -1,0 +1,22 @@
+.anime-details {
+    /* border: 1px solid grey;  */
+    justify-content: center;
+  
+    text-align: center;
+    
+    
+}
+
+.anime-details > div > div {
+/*     border: 1px solid yellow;
+ */    padding: 5px ;
+    justify-content: center;
+    align-items: center;
+}
+
+
+
+.centered-button  {
+   text-align: center;
+
+}
