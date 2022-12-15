@@ -17,11 +17,11 @@ import Top_4 from "./Top_4";
 import { Topic } from "./Anime";
 
 const APIS = {
-  recommend: "https://aca492r0pl.execute-api.us-west-2.amazonaws.com/prod/personalize-anime-userpersonalization/",
-  sims: "https://aca492r0pl.execute-api.us-west-2.amazonaws.com/prod/personalize-anime-sims/",
-  search: "https://aca492r0pl.execute-api.us-west-2.amazonaws.com/prod/search/search",
-  get_anime: "https://aca492r0pl.execute-api.us-west-2.amazonaws.com/prod/anime",
-  tracker: "https://aca492r0pl.execute-api.us-west-2.amazonaws.com/prod/animetracker/"
+  recommend: "https://Tu-API-ID.amazonaws.com/prod/personalize-anime-userpersonalization/",
+  sims: "https://Tu-API-ID.amazonaws.com/prod/personalize-anime-sims/",
+  search: "https://Tu-API-ID.amazonaws.com/prod/search/search",
+  get_anime: "https://Tu-API-ID.amazonaws.com/prod/anime",
+  tracker: "https://Tu-API-ID.amazonaws.com/prod/animetracker/"
 }
 
 
