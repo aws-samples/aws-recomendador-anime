@@ -49,7 +49,7 @@ class ApiPersonalize(Construct):
                     api_data = api, 
                     resource_name = '{userId}', 
                     methods = ['GET'], 
-                    backend_code = aws_lambda.Code.from_asset("./lambdas/recommend"), 
+                    backend_code = aws_lambda.Code.from_asset("./lambdas/personalization"), 
                     table=anime_table
                 ) 
 
