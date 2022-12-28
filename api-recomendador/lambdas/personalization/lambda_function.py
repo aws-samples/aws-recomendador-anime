@@ -9,7 +9,7 @@ anime_table = dynamo.Table(table_name)
 
 def lambda_handler(event, context):
     REGION =os.environ.get('REGION')
-    CAMPAIN_ARN = os.environ.get('CAMPAIN_ARN')
+    CAMPAIN_ARN = os.environ.get('CAMPAIG_ARN')
     FILTERS_STR = os.environ.get('FILTERS')
     FILTERS = []
     if FILTERS_STR is not None:
