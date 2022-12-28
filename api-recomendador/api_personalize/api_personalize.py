@@ -149,8 +149,8 @@ class ApiPersonalize(Construct):
         CfnOutput(self, api_data['API_NAME'] + "_out",value=base_api.url_for_path(path=new_resource.path))
 
     def make_resource(self, base_api, api_data,resource_name, methods, backend_code,table):
-        CAMPAIN_ARN = api_data['CAMPAIGN_ARN']
-        parts = CAMPAIN_ARN.split(':')
+        CAMPAIGN_ARN = api_data['CAMPAIGN_ARN']
+        parts = CAMPAIGN_ARN.split(':')
         parts.pop()
         FILTERS_ARN = ':'.join(parts) + ':filter/*'
 
@@ -158,7 +158,7 @@ class ApiPersonalize(Construct):
             self,api_data['API_NAME'] + "_lambda" ,handler="lambda_function.lambda_handler",
             code=backend_code,**PYTHON_LAMBDA_CONFIG, 
             environment=json.loads(json.dumps(dict(
-                CAMPAIN_ARN =CAMPAIN_ARN,
+                CAMPAIGN_ARN =CAMPAIGN_ARN,
                 TABLE_NAME=table.table_name,
                 INDEX_NAME = 'Name-index',
                 **BASE_ENV_VARIABLES)))
@@ -168,7 +168,7 @@ class ApiPersonalize(Construct):
         lambda_backend.add_to_role_policy(
             aws_iam.PolicyStatement(
                 actions=["personalize:GetPersonalizedRanking", "personalize:GetRecommendations"], 
-                resources=[CAMPAIN_ARN, FILTERS_ARN]))
+                resources=[CAMPAIGN_ARN, FILTERS_ARN]))
 
         new_api = base_api.root.add_resource(api_data['API_NAME'])
         new_resource = new_api.add_resource(resource_name)
