@@ -39,7 +39,7 @@ export default (props) => {
         }
         header="Sobreescribir User ID"
       >
-        Ingresa con un user ID mayor a 320.000 para conocer la experiencia de nuevos usuarios, esto devido a que el modelo se entreno con esa cantidad de usuarios.
+        Ingresa con un user ID mayor a 320.000 para conocer la experiencia de nuevos usuarios, esto debido a que el modelo se entreno con esa cantidad de usuarios.
       </Modal>
       <TopNavigation
         identity={{
