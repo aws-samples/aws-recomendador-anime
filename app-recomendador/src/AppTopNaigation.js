@@ -39,7 +39,7 @@ export default (props) => {
         }
         header="Sobreescribir User ID"
       >
-        Problemos con un user ID mayor a 500000 para conocer la experiencia de nuevos usuarios
+        Ingresa con un user ID mayor a 320.000 para conocer la experiencia de nuevos usuarios, esto devido a que el modelo se entreno con esa cantidad de usuarios.
       </Modal>
       <TopNavigation
         identity={{
@@ -56,7 +56,7 @@ export default (props) => {
           {
             type: "menu-dropdown",
             text: "Como crear esta aplicación",
-            description: "Creadora eliaws@amazon.com",
+            description: "Autora Elizabeth",
             iconName: "user-profile",
             items: [
               { id: "blog1", text: "Introducción a AI y ML", href:"https://aws.amazon.com/es/blogs/aws-spanish/introduccion-artificial-intelligence-y-machine-learning-para-desarrollares-de-aplicaciones/",external:true,
