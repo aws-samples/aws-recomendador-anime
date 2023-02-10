@@ -162,7 +162,7 @@ export const Topic = (props) => {
               gridDefinition={[{ colspan: 12 }]}
             >
               <div align-items="center">
-                <img src="./play_anime.jpeg"
+                <img src="./play_anime.png"
                   alt="Imagen que simula un reproductor de video"
                   onClick={() => {
                     //verAnime()
