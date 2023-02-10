@@ -56,20 +56,27 @@ export default (props) => {
           {
             type: "menu-dropdown",
             text: "Como crear esta aplicación",
-            description: "eliaws@amazon.com",
+            description: "Creadora eliaws@amazon.com",
             iconName: "user-profile",
             items: [
-              { id: "blog1", text: "Recomendador de Anime: Machine Learning" },
-              { id: "blog2", text: "Recomendador de Anime: Amazon Personalize" },
-              { id: "blog3", text: "Security" },
+              { id: "blog1", text: "Introducción a AI y ML", href:"https://aws.amazon.com/es/blogs/aws-spanish/introduccion-artificial-intelligence-y-machine-learning-para-desarrollares-de-aplicaciones/",external:true,
+    externalIconAriaLabel:" (opens in a new tab)"  },
+              { id: "blog2", text: "Cómo crear un modelo de recomendación basado en machine learning", href:"https://aws.amazon.com/es/blogs/aws-spanish/como-desplegar-el-modelo-recomendador-de-anime-en-una-api-rest/",external:true,
+    externalIconAriaLabel:" (opens in a new tab)" },
+              { id: "blog3", text: "Cómo desplegar el modelo recomendador de anime en una API REST", href:"https://aws.amazon.com/es/blogs/aws-spanish/como-desplegar-el-modelo-recomendador-de-anime-en-una-api-rest/",external:true,
+    externalIconAriaLabel:" (opens in a new tab)" },
+              { id: "blog4", text: "Cómo crear una aplicación web para recomendaciones personalizadas de anime en tiempo real." },
+              { id: "blog5", text: "Prox: Incorporar un pool de usuarios a tu aplicación web para recomendaciones personalizadas." },
+              { id: "blog6", text: "Prox: Analiza el comportamiento de tu aplicación web para recomendaciones personalizadas en tiempo real con un dashboard." },
+              
               {
                 id: "support-group",
                 text: "Support",
                 items: [
                   {
                     id: "documentation",
-                    text: "Documentation",
-                    href: "#",
+                    text: "Como crear este menu con cloudscape",
+                    href: "https://cloudscape.design/components/top-navigation/?tabId=playground",
                     external: true,
                     externalIconAriaLabel:
                       " (opens in new tab)"
@@ -78,7 +85,7 @@ export default (props) => {
                   {
                     id: "feedback",
                     text: "Feedback",
-                    href: "#",
+                    href: "https://www.linkedin.com/in/lizfue/",
                     external: true,
                     externalIconAriaLabel:
                       " (opens in new tab)"
