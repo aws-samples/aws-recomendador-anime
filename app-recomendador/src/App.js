@@ -11,7 +11,7 @@ import AppLayout from "@cloudscape-design/components/app-layout";
 import Home from './Home'
 
 
-import AppTopNaigation from "./AppTopNaigation";
+import AppTopNavigation from "./AppTopNavigation";
 import "./App.css"
 import Top_4 from "./Top_4";
 import { Topic } from "./Anime";
@@ -58,7 +58,7 @@ export default () => {
 
 const Layout = (props) => [
   
-  <AppTopNaigation key={1} set_user_id= {props.set_user_id} />,
+  <AppTopNavigation key={1} set_user_id= {props.set_user_id} />,
   <AppLayout key={2}
     headerSelector = "#h"
     toolsHide = {true}
