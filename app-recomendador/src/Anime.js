@@ -84,23 +84,33 @@ export const Topic = (props) => {
   }
 
   const calificarAnime = () => {
+    
+    if (score<11) {
     const eventData = {
       "itemId": String(MAL_ID),
       "eventType": "RATING",
       "eventValue": parseInt(score),
       "sessionId": String(props.session)
     }
+    
 
     sendEventToPersonalize(props.APIS.tracker + props.user_id, eventData).then((response) => response.json())
       .then((data) => {
         console.log(data)
         if ("RequestId" in data.data.ResponseMetadata) {
-          setMessage("Anime Calificado!")
+          setMessage("Anime calificado, Ahora actualiza el navegador para que veas la magia de Amazon Personalize")
         } else {
-          setMessage("ocurrió un error")
+          setMessage("Ocurrió un error")
         }
-        setMessageVisible(true)
+        
       });
+  }else  {
+          setMessage("Valor erroneo")
+          
+        }
+        
+    setMessageVisible(true)
+    
   }
 
 
@@ -201,7 +211,7 @@ export const Topic = (props) => {
                   }
                   header={"Hola, " + props.user_id + " Califica a " + animeData.Name}
                 >
-                  Ingresa una calificación del 1 al 10. Donde 1 es que te gusto poco y 10 te gusto mucho. (Completed)
+                  Ingresa una calificación del 1 al 10. Donde 1 es que te gusto poco y 10 te gusto mucho.
                 </Modal>
 
                 <Modal
@@ -212,7 +222,7 @@ export const Topic = (props) => {
                   visible={messageVisible}
                   closeAriaLabel="Close modal"
 
-                  header={"respuesta"}
+                  header={"Respuesta a la calificación"}
                 >
                   {message}
                 </Modal>

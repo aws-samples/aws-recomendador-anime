@@ -56,7 +56,7 @@ export default (props) => {
           {
             type: "menu-dropdown",
             text: "Como crear esta aplicación",
-            description: "Autora Elizabeth",
+            description: "Recomendador de Anime",
             iconName: "user-profile",
             items: [
               { id: "blog1", text: "Introducción a AI y ML", href:"https://aws.amazon.com/es/blogs/aws-spanish/introduccion-artificial-intelligence-y-machine-learning-para-desarrollares-de-aplicaciones/",external:true,
