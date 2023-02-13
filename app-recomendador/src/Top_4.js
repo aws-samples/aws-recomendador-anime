@@ -74,8 +74,10 @@ export default (props) => {
           },
           {
             id: "personalizescore",
-            header: "Recommendation Score",
-            content: item => (parseInt(item.personalizescore * 100) + "%"), width: 48
+            header:  "" ,
+            //content: item => item.personalizescore ? ("Recomendation Score:"+ parseInt(item.personalizescore * 100) + "%") : "", 
+            content: item => item.personalizescore ? <div><strong>Recommendation<br/>Score: </strong> {parseInt(item.personalizescore * 100) }% </div>: null, 
+            width: item => 48
           },
           {
             id: "ver",
