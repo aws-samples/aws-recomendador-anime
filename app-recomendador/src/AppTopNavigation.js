@@ -43,7 +43,7 @@ export default (props) => {
       </Modal>
       <TopNavigation
         identity={{
-          href: "#",
+          href: "/",
           title: "Recomendador de anime",
           logo: {
             src:
