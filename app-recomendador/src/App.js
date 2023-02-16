@@ -16,13 +16,7 @@ import "./App.css"
 import Top_4 from "./Top_4";
 import { Topic } from "./Anime";
 
-const APIS = {
-  recommend: "https://Tu-API-ID.amazonaws.com/prod/personalize-anime-userpersonalization/",
-  sims: "https://Tu-API-ID.amazonaws.com/prod/personalize-anime-sims/",
-  search: "https://Tu-API-ID.amazonaws.com/prod/search/search",
-  get_anime: "https://Tu-API-ID.amazonaws.com/prod/anime",
-  tracker: "https://Tu-API-ID.amazonaws.com/prod/animetracker/"
-}
+import APIS from "./apis_url.js"
 
 
 export default () => {
