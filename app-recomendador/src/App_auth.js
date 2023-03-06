@@ -12,7 +12,7 @@ import AppLayout from "@cloudscape-design/components/app-layout";
 import Home from './Home'
 
 
-import AppTopNaigation from "./AppTopNaigation";
+import AppTopNaigation from "./AppTopNavigation_auth";
 import "./App.css"
 import Top_4 from "./Top_4";
 import { Topic } from "./Anime";

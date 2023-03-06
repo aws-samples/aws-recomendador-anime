@@ -91,20 +91,13 @@ export default (props) => {
                       " (opens in new tab)"
                   }
                 ]
-              },
-              { id: "signout", text: "Sign out" }
+              }
             ]
           },
-          
-          
+
           {
             type: "button",
-            text: "Probar con otro User ID",
-            onClick: (()=>{setVisible(true)})
-          },
-          {
-            type: "button",
-            text: "Salir",
+            text: "Sign out",
             onClick: (async ()=>{
                try {
         await Auth.signOut({ global: true });

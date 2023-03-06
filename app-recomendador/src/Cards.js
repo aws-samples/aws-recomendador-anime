@@ -39,7 +39,9 @@ export default () => {
       }}
       cardsPerRow={[
         { cards: 1 },
-        { minWidth: 500, cards: 2 }
+        { minWidth: 500, cards: 2 },
+        { minWidth: 700, cards: 3 },
+        { minWidth: 1000, cards: 4 }
       ]}
       items={[
         {
