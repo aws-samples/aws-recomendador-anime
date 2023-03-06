@@ -1,565 +1,413 @@
-# Cómo desplegar el modelo recomendador de anime en una API REST.
+# Crea una aplicación web para probar las recomendaciones personalizadas de anime en tiempo real.
 
-Blog original --> [Cómo desplegar el modelo recomendador de anime en una API REST.](https://aws.amazon.com/es/blogs/aws-spanish/como-desplegar-el-modelo-recomendador-de-anime-en-una-api-rest/)
-
-**Recomendaciones personalizadas de anime**, es una serie donde construimos una aplicación web capaz de entregar una experiencia personalizada de recomendaciones de animes nuevos de acuerdo a la preferencia del usuario y a medida que se utiliza con mayor frecuencia, puede ir entregando recomendaciones cada vez más relevantes.
-
-Esta serie consistirá en los siguientes episodios: 
-
-- [Cómo crear un modelo de recomendaciones personalizadas](https://dev.to/aws/como-crear-un-modelo-de-recomendacion-basado-en-machine-learning-37mj).
-- Cómo desplegar el modelo recomendador de anime en una API REST (este episodio). 
-- Cómo crear una aplicación web para recomendaciones personalizadas de anime en tiempo real.
-- Incorporar un pool de usuarios a tu aplicación web para recomendaciones personalizadas.
-- Analiza el comportamiento de tu aplicación web para recomendaciones personalizadas en tiempo real con un dashboard. 
-
-En el primer episodio creamos un modelo de recomendaciones de anime utilizando la data histórica del de Anime Recommendation Database 2020 de kaggle. Utilizamos el servicio de Amazon Personalize para entrenar el modelo y hacerle inferencia a través de una API utilizando un jupyter notebook, obteniendo recomendaciones de acuerdo a los gustos del usuario y/o anime consultado, filtrar los resultados por géneros y, además podemos alimentar el modelo recomendador con nuevas interacciones de los usuarios. 
-
-
-En este segundo episodio, crearemos una API REST (Fig. 1) para consumir de forma segura y escalable la API de Amazon Personalize creada en el episodio anterior. 
-
-
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/7grp3ihyyuvgvcscrucj.png) Fig. 1 Diagrama de api-rest para un recomendador utilizando Amazon Personalize.
-
-
-Emplearemos el servicio Amazon API Gateway para invocar funciones de AWS Lambda con el código para consultar la API de Amazon Personalize para cada tipo de inferencia (Event Tracker, anime-sims, anime-rerank y user-personalization), la respuesta recibida la complementaremos con información adicional de los animes que almacenaremos en Amazon DynamoDB y obtendremos como resultado un JSON con la información completa de los animes recomendados. 
+Blog original --> https://aws.amazon.com/es/blogs/aws-spanish/crea-una-aplicacion-web-para-probar-las-recomendaciones-personalizadas-de-anime-en-tiempo-real/
 
 ---
+**Recomendaciones personalizadas de anime**, es una serie de episodios donde te guío en la construcción de una aplicación web capaz de entregar una experiencia personalizada de recomendaciones de animes, nuevos de la preferencia del usuario y, a medida que se utiliza con mayor frecuencia, puede ir entregando recomendaciones cada vez más relevantes.
 
-## El proyecto 👷🏻: Cómo desplegar el modelo recomendador de anime en una API REST. 
+Consiste en los siguientes episodios: 
+•	[Cómo crear un modelo de recomendaciones personalizadas.](https://aws.amazon.com/es/blogs/aws-spanish/como-crear-un-modelo-de-recomendacion-basado-en-machine-learning/)
+•	[Cómo desplegar el modelo recomendador de anime en una API REST.](https://aws.amazon.com/es/blogs/aws-spanish/como-desplegar-el-modelo-recomendador-de-anime-en-una-api-rest/)
+•	Crea una aplicación web para probar las recomendaciones personalizadas de anime en tiempo real. (este episodio).
+•	Incorporar un pool de usuarios a una aplicación web.
+•	Analizar el comportamiento de una aplicación web mediante un dashboard. 
 
+En el [primer episodio](https://aws.amazon.com/es/blogs/aws-spanish/como-crear-un-modelo-de-recomendacion-basado-en-machine-learning/) se entrenó un modelo de recomendaciones de anime utilizando [Amazon Personalize](https://aws.amazon.com/es/personalize/) empleando las [calificaciones de Anime](https://www.kaggle.com/datasets/hernan4444/anime-recommendation-database-2020). Este modelo se puede utilizar a través de la API de [Personalize Runtime](https://docs.aws.amazon.com/personalize/latest/dg/API_Operations_Amazon_Personalize_Runtime.html) utilizando un jupyter notebook. 
 
-**Pre-requisitos:**
+En el [segundo episodio](https://aws.amazon.com/es/blogs/aws-spanish/como-desplegar-el-modelo-recomendador-de-anime-en-una-api-rest/)  se hizo la integración de la API de Personalize a una API REST (Fig. 1) empleando [Amazon API Gateway](https://aws.amazon.com/es/api-gateway/) para invocar funciones de [AWS Lambda](https://aws.amazon.com/es/lambda/),  y así consumirla de forma segura y escalable, esta API permite entregar  las recomendaciones de acuerdo a los gustos del usuario y/o anime consultado, agregar la metadata necesaria, filtrar los resultados por géneros y además alimentar el modelo recomendador con las nuevas interacciones de los usuarios empleando [Event Tracker de Amazon Personalize](https://docs.aws.amazon.com/personalize/latest/dg/API_EventTracker.html).
+	  	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/0sln5gnzwst6ix1tow2w.png)
 
-- [Cuenta de AWS](https://signin.aws.amazon.com/signin?redirect_uri=https%3A%2F%2Fportal.aws.amazon.com%2Fbilling%2Fsignup%2Fresume&client_id=signup)
-
-- Conocimientos básicos en Python. 
-
-
-
-### Manos a la obra 🚀 👩🏻‍🚀
-
-### Paso 1: Crearemos el modelo de recomendación personalizado.
-
-Sigue los pasos del episodio [Cómo crear un modelo de recomendación personalizado](https://aws.amazon.com/es/blogs/aws-spanish/como-crear-un-modelo-de-recomendacion-basado-en-machine-learning/) e ignora el paso 12 donde se borran los recursos. 
-
-### Paso 2: Crearemos el archivo de datos para la tabla.
+Fig. 1 Diagrama de api-rest para un recomendador utilizando Amazon Personalize.	
 
 
-El modelo de recomendaciones esta entrenado con los IDs del anime, nombrado como ITEM_ID, por lo cual, las consultas y respuestas al modelo están relacionadas al ITEM_ID.
+En este episodio vas a desplegar una aplicación web que simulará la interfaz de una plataforma de video streaming de series y películas de Anime, donde el usuario podrá:
 
-Para la futura aplicación web necesitamos que la API REST entregue el ID del anime (ITEM_ID), el nombre del anime y su información general. 
+•	Realizar búsquedas de anime a través del nombre (1 en Fig. 1).
+•	Recibir recomendaciones de animes personalizadas (2 en Fig. 1) de acuerdo con los filtros creados en el [primer episodio](https://aws.amazon.com/es/blogs/aws-spanish/como-crear-un-modelo-de-recomendacion-basado-en-machine-learning/) (Shounen, Music, Drama, Sci-Fi y Action). 
+•	Seleccionar un anime conduciéndolo a una nueva página, donde:
+o	Recibirá la descripción del anime (3 en Fig. 1), 
+o	Recibirá recomendaciones de anime similares (4 en Fig. 1) al que está mirando.
+o	Podrá simular que lo visualizo y calificarlo (5 en Fig.1) 
+o	Ingresada la calificación la aplicación entregará recomendaciones de acuerdo a esta preferencia, porque el modelo se estará retroalimentando con el perfil del usuario. 
 
-Para esto poblaremos una tabla de DynamoDB con el contenido del archivo anime_with_synopsis.csv de [Anime Recommendation Database 2020](https://www.kaggle.com/datasets/hernan4444/anime-recommendation-database-2020) de kaggle descargado en el paso anterior.
+En la creación de esta aplicación vas a desplegar el código fuente en el [repositorio de este proyecto](https://github.com/aws-samples/aws-recomendador-anime/tree/main/app-recomendador), creado con [react](https://reactjs.org/) y complementado con el sistema de diseño [CloudScape](https://cloudscape.design/). 
 
-
-La tabla tendrá dos usos: 
-
-1. Retornar **Nombre del Anime** cuando se consulte por **ITEM_ID**. 
-2. Retornar un listado de **ITEM_ID** cuando se realice una búsqueda por **Nombre de Anime**, no necesariamente exacto.
-
-
-Ahora, explorando el notebook [anime-table.ipynb](https://github.com/aws-samples/aws-recomendador-anime/blob/main/api-recomendador/anime-table.ipynb) de [Amazon SageMaker](https://aws.amazon.com/es/sagemaker/), creado en el Paso 1, vemos que el archivo anime_with_synopsis.csv costa de 5 columnas (Fig. 2):
-
-
-- **MAL_ID:** ID del anime. 
-- **Name:** Nombre del anime. 
-- **Score:** Promedio de puntación obtenida por el anime. 
-- **Genres:** Géneros del anime. 
-- **Sypnosis:** Descripción del anime. 
+Para empezar (Fig. 2) 
+-	Clonarás el repositorio del proyecto en un entono virtual de desarrollo de [AWS Cloud9 ](https://aws.amazon.com/es/cloud9/)
+-	Acá es donde configurarás los endpoints las APIs REST creadas en el episodio anterior (tus APIs)
+-	Probarás la aplicación web de forma local. 
+-	Crearás un repositorio nuevo con los cambios en [AWS CodeCommit](https://aws.amazon.com/es/codecommit/) 
+-	Finalmente, el despliegue de la aplicación web de recomendaciones de Anime lo harás empelando el servicio de [AWS Amplify](https://aws.amazon.com/es/amplify/).
 
 
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/rajelzck6otlmyj0n0mx.png)Fig.2 Muestra de anime_with_synopsis.csv
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ldlvx9gttg52ye1cvwx3.png)
+
+Fig. 2 Diagrama creación aplicación web recomendación de anime.	
 
 
-El primer uso de la tabla lo completamos con la data de anime_with_synopsis, para el segundo uso es necesario agregar una nueva columna Name_Lower con los valores de Name normalizados a minúsculas, las consultas no siempre se emplean utilizando mayúsculas y minúsculas en conjunto. 
+Esto te permitirá emplear el método de una integración y despliegue continuo (en ingles continuous integration/ continuous deployment – CI/CD), los cambios que se realicen en el repositorio de CodeCommit automáticamente generaran un nuevo despliegue de la aplicación para integrar los nuevos cambios. 
+
+
+**¡A construir! 🧰🚀**
+
+
+## El proyecto 👷🏻: Crea una aplicación web para recomendaciones personalizadas de anime en tiempo real.
+
+Pre-requisitos:
+•	[Cuenta de AWS](https://aws.amazon.com/es/free/)
+•	Conocimientos básicos en Python. 
+•	Conocimientos básicos en JavaScript / react. 
+
+**Manos a la obra 🚀 👩🏻‍🚀**
+
+## Paso 1: Despliega la API REST del modelo recomendador de anime.
+
+1.	Sigue los pasos del episodio [Cómo crear un modelo de recomendación personalizado](https://aws.amazon.com/es/blogs/aws-spanish/como-crear-un-modelo-de-recomendacion-basado-en-machine-learning/) e ignora el paso final donde se borran los recursos. 
+2.	Sigue los pasos del episodio [Cómo desplegar el modelo recomendador de anime en una API REST](https://aws.amazon.com/es/blogs/aws-spanish/como-desplegar-el-modelo-recomendador-de-anime-en-una-api-rest/) e ignora el paso final donde se borran los recursos. 
+
+
+## Paso 2:  Crea y configura el entorno en AWS Cloud9.
+
+1.	Para crear el entorno en AWS Cloud9 sigue [los pasos en este link](https://docs.aws.amazon.com/es_es/cloud9/latest/user-guide/tutorial-create-environment.html), y selecciona la región en la cual configuraste en los dos episodios anteriores. 
+2.	Para la configuración debes clonar el [repositorio de esta serie de episodios](https://github.com/aws-samples/aws-recomendador-anime), selecciona Clone from Github en la pestaña de bienvenida de Cloud9 (Fig.3), y luego pega el link del repositorio [https://github.com/aws-samples/aws-recomendador-anime](https://github.com/aws-samples/aws-recomendador-anime) (Fig. 4).
+
+	 	
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/vcq923koajuw8bonb0rz.png)
+
+
+Fig. 3 Seleccionar Clone from GitHub	
+
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/2xu89ycn2x1sl01i7y73.png)
+
+Fig. 4 Clona repositorio de Recomendaciones personalizadas de anime	
+
+
+## Paso 3:  Configura las URL de la API REST para que sean invocadas por la aplicación web. 
+
+
+Para eso modifica el valor de APIS del archivo en _**app-recomendador/src/apis_url.js**_ (Fig. 5) pegando los valores de Invocar URL  que obtuviste en el paso 10 del [episodio 2](https://aws.amazon.com/es/blogs/aws-spanish/como-desplegar-el-modelo-recomendador-de-anime-en-una-api-rest/#:~:text=Paso%2010%3A%20Probar%20la%20API.). 
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/b0d43r5vfv0e5e3lf8xu.png)
+
+Fig. 5 Valores a modificar en archivo en app-recomendador/src/App.js	
+
+
+## Paso 4: Corre la aplicación localmente en Cloud9. 
+
+Lanza la aplicación [react](http://reactjs.org/) existente en el repositorio en el localhost de Cloud9, para eso: 
+
+1.	Ve a la carpeta app-recomendador: 
 
 ```
-anime_with_synopsis['Name_Lower'] = anime_with_synopsis['Name'].str.lower()
+cd aws-recomendador-anime/app-recomendador/
 ```
 
-Continuando los pasos en [anime-table.ipynb](https://github.com/aws-samples/aws-recomendador-anime/blob/main/api-recomendador/anime-table.ipynb), se crea el archivo new_anime_with_synopsis.csv y se guarda en el bucket creado en el Paso 1.
+2.	Escribe en la terminal la siguiente secuencia de comandos: 
+
+```
+npm install
+npm start
+```
+
+3.	Para visualizar la aplicación debes ir a **Preview** y seleccionar **Preview Running Application** (Fig. 6), esto debido a que estas dentro del ambiente virtual de Cloud9, pero si estuvieras trabajando en un ambiente local la aplicación se desplegaría de forma automática en el navegador. 
 
 
-**Tip** 😉: Puedes explorar los datos en S3 utilizando [Amazon S3 Select](https://docs.aws.amazon.com/AmazonS3/latest/userguide/selecting-content-from-objects.html?icmpid=docs_s3_hp_s3_select_page). 
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/w9khx6fvelatvsrnbl6h.png)
 
 
-**PD:** Tambien lo puedes desplegar utilizando CDK con los siguientes pasos: [Pasos](https://github.com/aws-samples/aws-recomendador-anime/blob/main/api-recomendador/CDK_steps.md)
+Fig. 6. Menú para ver una aplicación web en Amazon Cloud9.	
 
-### Paso 3: Crearemos tabla anime-table en Amazon DynamoDB. 
+Copia la dirección de esa nueva ventana y pégala en el navegador (Fig. 7). 
 
-1. Accede a la consola de Amazon DynamoDB en la misma región donde creaste el proyecto del Paso 1. 
-2. En la parte derecha del panel de Amazon DynamoDB, selecciona Importaciones de S3 y luego el botón Importación de S3. 
-3. En opciones de importación
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/4asy95tb4hs1p6cgwaz8.png)
 
-   a. En Explorar S3, elige el archivo que creamos anteriormente (Fig. 4).
 
-   b. En Importar formato de archivo selecciona CSV. 
+Fig. 7. Aplicación web local en Amazon Cloud9.	
 
-   c. Selecciona **Siguiente**.
+
+## Paso 5: Prueba localmente la aplicación Recomendador de anime. 
+
+El paso anterior te muestra una aplicación web como en la Fig. 8. 
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/53y87diiccwvn16cbwa0.png)
+
+
+Fig. 8. Aplicación Recomendador de Anime.	
+
+Las recomendaciones son personalizadas para el usuario que la utiliza, al ingresar a la aplicación web creada en este episodio lo haces con un usuario genérico 500000, [escrito en el código](https://github.com/aws-samples/aws-recomendador-anime/blob/main/app-recomendador/src/AppTopNavigation.js), por lo que todas las recomendaciones entregadas van a estar asociadas a ese usuario, lo puedes cambiar el menú Probar con otro User ID (Fig. 9). 
+
+Si deseas generar un usuario para ti y empezar a recibir recomendaciones personalizadas debes ingresar un ID de usuario mayor a 320.000, correspondiente al ID de usuario de mayor valor en el [dataset](https://www.kaggle.com/datasets/hernan4444/anime-recommendation-database-2020) empleado para entrenar el modelo (un usuario que el modelo no conoce).
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/u16lo1x26u9jp5av5sf8.png)
+
+
+Fig. 9. Cambiar ID de usuario.	
+
+
+No se recomienda forzar el registro de usuarios en el código, esta es una excepción para probar la aplicación. Para crear una a[plicación web segura](https://maturitymodel.security.aws.dev/es/) en el próximo episodio se va a abordar como incorporar un pool de usuarios.
+
+Tomando la consideración anterior, te explico como interactuar con las API REST creadas en el  [episodio anterior](https://aws.amazon.com/es/blogs/aws-spanish/como-desplegar-el-modelo-recomendador-de-anime-en-una-api-rest/) (Fig. 1) desde esta aplicación web. 
+
+1.	**Información entregada por Anime**: Es información entregada a las API REST (Fig.1) por Personalize para cada Anime (Fig. 10), _[Recommendation Score](https://docs.amazonaws.cn/en_us/personalize/latest/dg/getting-recommendations.html)_ es la puntuación (0 a 100%) que genera Personalize a los elementos y se refiere a la certeza de que el usuario prefiere ese contenido. 
+	 	
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/iw6zucne2m0ab1iyec5v.png)
+
+
+Fig. 10 Información de Anime.	
+
+
+2.	**Recomendaciones de anime por género**: en el inicio de la página verás 4 recomendaciones de anime personalizadas para el usuario separadas por género (Shounen, Drama, Music, Sci-Fi, Action), esto se logra consultando la API REST **_personalization_** (Fig. 1), por ejemplo, para Shounen (Fig.11): 
+
+`https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/personalization/50000?filter=Shounen` 
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/fhatagb349pevvi3am15.png)
+
+
+Fig. 11. Recomendaciones personalizadas de género Shounen.	
+
+
+3.	**Búsqueda de anime por su nombre:** en el menú donde dice Ingresa Anime para buscar (Fig. 12), al ingresar el nombre de un anime va a invocar la API REST search (Fig. 1). 
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ceu3nkpf08a3cm4y3bk1.png)
+
+Fig. 12. Búsqueda de anime por su nombre.
 	
 
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/hxp89sy4l30y6rsticdr.png)Fig.4 Explorar S3 > Elige archivo new_anime_with_synopsis.csv.	
+	Por ejemplo, el resultado de ingresar naruto (Fig. 13): 
 
-4. En Tabla destino: 
-
-  a. En el campo **Nombre de la tabla**, introduce a**nime-table**.
-  b. En el campo [Clave de partición (Primary key)](https://docs.aws.amazon.com/es_es/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html), escribe MAL_ID. El tipo de datos en **Cadena (String)**.
-
-5. Selecciona **Importar**.
-
-Las consultas de a las tablas de DynamoDB se hacen a través de la clave de partición (Primary key), en este caso MAL_ID. 
-
-Ahora, necesitamos una segunda tabla para poder consultar a través de Name_Lower, para esto creamos un [Global Secundary Index (GSI)](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html):
-
-1. Accede a la tabla dando **click** sobre el nombre de la tabla. 
-2. En el menú Índices, selecciona **Crear Índice** y luego:
-
-  a. En el campo Clave de partición (Particion Key), escribe Name_Lower y tipo de datos en **Cadena (String)**.
-
-  b. Al final en Proyecciones de atributos, selecciona **Only keys**. 
-
-  c. Finaliza con **Crear Índice**.
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/pqr525lmtj9or4ehowyq.png)
 
 
-### Paso 4: Crearemos los permisos para las Funciones Lambda.
-
-Separando las funciones Lambda de la Arquitectura en la Fig. 5, debemos crear 6 Funciones Lambda, 4 con permisos para Personalize, con el código para consultar la API creada en el episodio anterior, y 5 con permiso de lectura a DynamoDB para complementar la información entregada por Personalize. 
+Fig. 13. Resultado de búsqueda de anime por su nombre.	
 
 
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/rrremc4lnd046cwrps7z.png)	Fig. 5 Funciones Lambda de la Arquitectura.	
 
 
-Para otorgar los permisos a las funciones Lambda se crean los [AWS Identity and Access Management Roles (IAM Roles)](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) de ejecución [(rol de ejecución)](https://docs.aws.amazon.com/es_es/lambda/latest/dg/lambda-intro-execution-role.html) con políticas de acceso para cada servicio, especificado en la Tabla 1 y separado en 3 tipos. 
+4.	Selecciona **Ver Anime**: automáticamente abre una nueva ventana que te mostrará: 
+a.	Descripción del anime (Fig.14), entregada por la API REST get_anime (Fig. 1) 
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/g9dt28eunz2uqptija21.png)
 
 
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/6jbhyj4ghrfu9d0oqfnm.png) Tabla 1. Tipos de IAM Roles para Funciones Lambda.
+Fig. 14. Descripción del anime seleccionado.	
 
 
-Para la creación de cada política de IAM sigue los pasos en este link, en el paso 5 pega el **JSON** a continuación correspondiente a cada tipo de IAM Role, ingresando tu **región** e **ID de cuenta** donde corresponde y escribe el Nombre respectivo para cada una en el paso 8 del link. 
+b.	Animes Similares a ese anime seleccionado (Fig. 15), entregada por la API REST sims. (Fig. 1)
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/4z6d04dqorvv2amkqltv.png)
+Fig. 15. Animes Similares al anime seleccionado.	
+
+c.	Recomendaciones personalizadas para ti, entregada por la API REST personalization sin el filtro del género.
 
 
-a. Política IAM Role verde - **Nombre**: politicaverde: 
+
+5.	**Selecciona Calificar**. En una ventana (Fig. 16) podrás calificar el anime. Esto permite alimentar modelo de recomendaciones de anime con tu preferencia empleando la API REST _**tracker**_.
 
 
-```
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": [
-                "xray:PutTraceSegments",
-                "xray:PutTelemetryRecords"
-            ],
-            "Resource": "*",
-            "Effect": "Allow"
-        },
-        {
-            "Action": "personalize:PutEvents",
-            "Resource": "*",
-            "Effect": "Allow"
-        }
-    ]
-}
-```
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/f0af6ua4olpgnhvisbmu.png)
 
-b. Política IAM Role azul - **Nombre**: politicaazul:
- 
-
-```
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": [
-                "xray:PutTraceSegments",
-                "xray:PutTelemetryRecords"
-            ],
-            "Resource": "*",
-            "Effect": "Allow"
-        },
-        {
-            "Action": [
-                "dynamodb:GetItem"
-            ],
-            "Resource": [
-                "arn:aws:dynamodb:TU-REGION:TU-ID-CUENTA:table/anime_table",
-                "arn:aws:dynamodb:TU-REGION:TU-ID-CUENTA:table/anime_table/index/"
-            ],
-            "Effect": "Allow"
-        },
-        {
-            "Action": [
-                "personalize:GetPersonalizedRanking",
-                "personalize:GetRecommendations"
-            ],
-            "Resource": [
-                "arn:aws:personalize:TU-REGION:TU-ID-CUENTA:campaign/*",
-                "arn:aws:personalize:TU-REGION:TU-ID-CUENTA:filter/*"
-            ],
-            "Effect": "Allow"
-        }
-    ]
- }
-```
-
-c. Política IAM Role Rojo - **Nombre**: politicarojo: 
+Fig. 16. Ventana calificar anime.	
 
 
-```
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": [
-                "xray:PutTraceSegments",
-                "xray:PutTelemetryRecords"
-            ],
-            "Resource": "*",
-            "Effect": "Allow"
-        },
-        {
-            "Action": [
-                "dynamodb:GetItem",
-                "dynamodb:Scan"
-            ],
-            "Resource": [
-                "arn:aws:dynamodb:TU-REGION:TU-ID-CUENTA:table/anime_table",
-                "arn:aws:dynamodb:TU-REGION:TU-ID-CUENTA:table/anime_table/index/"
-            ],
-            "Effect": "Allow"
-        }
-        
-    ]
-}
-```
-
-Una vez, creadas las políticas procedemos a crear los IAM Roles: 
-
-1. En la consola de [Amazon IAM](https://us-east-1.console.aws.amazon.com/iam/?region=us-east-1#) selecciona **Roles**.
-2. Selecciona **Crear Roles**. 
-3. En **Seleccionar entidad de confianza**:
-
-  a. Tipo de entidad de confianza: **Servicio de AWS**. 
-  b. Caso de uso: **Lambda**
-  c. **Siguiente.**
-
-4. En Agregar permisos, realiza lo siguiente para cada IAM Role:  
-
-Por ejemplo, para el IAM Role verde:
-i.	Buscar y seleccionar: AWSLambdaBasicExecutionRole
-ii.	Quita el filtro. 
-iii.	Buscar y seleccionar: **politicaverde**
-iv.	Selecciona **Siguiente**.
-v.	Nombre del rol: **role-verde**.
-vi.	Selecciona **Crear rol**.
-
-Al finalizar debes visualizar en la consola algo similar a la Fig. 6 para cada **IAM Role**. 
+6.	**Actualiza las recomendaciones:** cuando alimentas el modelo con tus preferencias automáticamente se va a actualizar para entregarte recomendaciones nuevas ajustadas a ellas, esto lo descubres actualizando el navegador. 
 
 
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/vct3h4mdot2fb92fwect.png) Fig. 6 IAM Role creado con éxito.
+## Paso 6: Explora el código del front-end de la aplicación web.
+
+La aplicación esta creada con [react](https://reactjs.org/) y el de diseño proviene de los componentes de  CloudScape (Fig. 17)
+
+Si quieres crea una nueva aplicación debes seguir [los pasos para crear una aplicación con react](https://github.com/facebook/create-react-app) y los de [instalación de CloudScape](https://cloudscape.design/get-started/guides/introduction/), luego comienza a armarla importando y utilizando  los [componentes](https://cloudscape.design/components/overview/) de CloudScape listos. En la aplicación de Recomendador de Anime se utilizan los siguientes: 
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/zahtdq6lbfeoxpf5pydr.png)
 
 
-### Paso 5: Creamos las variables de entorno para las Funciones Lambda. 
+Fig. 17. Diseño de la aplicación con CloudScape.	
+
+-	Para crear la barra de navegación (1 en Fig. 17): [Top Navigation](https://cloudscape.design/components/top-navigation/?tabId=playground)
+Compuesta por otros componentes:
+o	[Button](https://cloudscape.design/components/button/?tabId=playground)
+o	[Button dropdown](https://cloudscape.design/components/button-dropdown/?tabId=playground)
+-	Para crear la búsqueda: [Input](https://cloudscape.design/components/input/?tabId=playground) con un [Button](https://cloudscape.design/components/button/?tabId=playground)
+-	Para visualizar los animes en listado (3 en Fig. 17): [Cards](https://cloudscape.design/components/cards/?tabId=playground)
+-	Para armar la estructura de la página (4 en Fig.17): [Grid](https://cloudscape.design/components/grid/?tabId=playground)
 
 
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/y81i6xfwaw2davk40x3j.png) Tabla 2. Configuración Funciones Lambda.
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ldjo09fk0blchd2dav6s.png)
 
-Los valores para [variables de entorno](https://docs.aws.amazon.com/es_es/lambda/latest/dg/configuration-envvars.html) de acuerdo a la Tabla 2 son los siguientes: 
+Fig. 18. Diseño de la vista de animes en la aplicación con CloudScape.	
 
-**TABLE_NAME:** anime-table.
- 
-**Región:** TU-REGIÓN, donde tienes creados los proyectos. Lo ves en la parte derecha de la consola, en mi caso es us-east-1. 
+-	El botón de Calificar el anime en la Fig. 18 es un [Modal](https://cloudscape.design/components/modal/?tabId=playground).
 
-**INDEX_NAME:** El valor en menú Índices de la tabla creada en el Paso 2 (Fig. 7) igual a Name_Lower-index. 
-
-
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/gtdbw175xhz235rzhjp3.png) Fig.7 Nombre de Índice secundario global.
+En este punto la aplicación debe funcionar localmente y aprovecha de explorar el código en la carpeta src.
 
 
-**FILTERS:** Los filtros fueron creados en el Paso 1, y están accediendo a la [consola de Amazon Personalize](http://console.aws.amazon.com/personalize/home), en el menú selecciona **Manage dataset groups** e ingresa a tu dataset, luego selecciona **Filters**, y veremos lo siguiente (Fig. 8):
+## Paso 7: Crea un repositorio en AWS CodeCommit en la consola.
+
+1.	Ingresa a la [consola de AWS CodeCommit](https://console.aws.amazon.com/codesuite/codecommit/home).
+2.	Selecciona la región donde configuraste los episodios anteriores. 
+3.	En **Repositorios** selecciona **Crear el repositorio**.
+4.	En **Nombre del repositorio** escribe **recomendador-anime** y selecciona **Crear**.
+
+## Paso 8: Actualiza el repositorio de CodeCommit con tu código. 
+
+1.	En Cloud9 abre una nueva terminal desde el menú de **Window** y luego **New Terminal** (Fig. 19). 
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/1xrxe8e39kwvcxyxurzo.png)
 
 
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/1mxwmoapitx1esy3b39b.png) Fig.8 Filtros en Amazon Personalize.
+Fig. 19. Nueva terminal en Cloud9.	
 
-Copia cada uno de los **Filter ARN** del recuadro naranja de la Fig. 8, luego completa la información en el nombre que corresponda a cada filtro en el siguiente JSON:  
 
+2.	Ve a la carpeta _**aws-recomendador-anime**_: 
+
+`cd aws-recomendador-anime`
+
+3.	Agrega un el repositorio _**recomendador-anime**_ como nuevo destino remoto: 
+
+`git remote add origin_new codecommit://recomendador-anime`
+
+4.	Sube todo _**aws-recomendador-anime**_ al nuevo repositorio (nuevo remoto del paso anterior) (Fig. 20): 
+
+`git push -u origin_new main
+`
+
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/hxc8c81g1awisb6g1b6z.png)
+
+
+Fig. 20 Repositorio recomendador-anime en la consola de CodeCommit.	
+
+
+
+5.	Actualiza el nuevo repositorio con las URLs de las APIs que agregaste en el Paso 3:
+
+`git add .
+git commit -m "actualizando las apis"
+git push origen_new main`
+
+## Paso 8: 🥳🚀👩🏻‍🚀 Despliega el Recomendador de anime en una aplicación web:
+
+1.	Ingresa a la consola de [AWS Amplify](https://console.aws.amazon.com/amplify)
+2.	Selecciona la región donde configuraste los episodios anteriores. 
+3.	Si es la primera vez que entras a la consola de Amplify, ve hasta el final y selecciona **Introducción** en **Amplify Hosting** (Fig. 21). Si no es la primera vez, ve a **Todas las aplicaciones**, selecciona **Nueva aplicación** y luego **Aloja la aplicación web**.
+
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/nop1a3auoo3d66wy952h.png)
+
+
+Fig. 21 Amplify Hosting por primera vez. 	
+
+
+4.	En el menú a continuación selecciona **AWS CodeCommit** (Fig. 22)
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/jq9f4eq2bdix621ybzoy.png)
+
+
+Fig. 22 Menú creación de Amplify Hosting.	
+
+5.	Selecciona el repositorio **recomendador-anime**, selecciona la casilla **¿Conectando un monorepo? Escoja una carpeta** y escribe el **app-recomendador**, carpeta donde se encuentra el código de la aplicación web (Fig. 23) y selecciona **Siguiente**. 
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/yxadx6aefab0e3zwmf63.png)
+
+
+Fig. 23 Configuración de Agregar ramificación de repositorio en Amplify.	
+
+6.	Amplify se basa en el lenguaje de programación de la aplicación para determinar el tipo de aplicación web y genera un archivo de configuración que contiene las instrucciones para empaquetar o compilar la aplicación, así como las instrucciones para desplegarlo y/o probarlo. Dicho archivo utilizado para crear el pipeline de CI/CD puede ser personalizado para funciones más avanzadas (Fig. 24). 
+	 	
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/8uzy6ujlsjummmbc3lbt.png)
+
+
+	Fig. 24 Configuración de compilación en Amplify.	
+
+7.	En Rol de IAM selecciona **Cree y utilice un nuevo role de servicio** y luego **Siguiente** (Fig. 25). 
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/rqf0qlc2hdy6ybw86rse.png)
+
+
+	Fig. 25 Selección opción Cree y utilice un nuevo role de servicio.	
+
+
+8.	Finaliza con **Guardar e implementar**.
+9.	Ahora puedes ver el proceso de CI/CD de la aplicación web en la consola de Amplify, te invito a curiosear y observar cada paso a medida que avanza, cuando finalice tu aplicación estará lista en el link que se encontrara dentro del recuadro naranja (Fig. 26).
+
+	 	
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/m6smp51gml9xtdv8naoh.png)
+
+
+	Fig. 26 Implementación de aplicación web en Amplify.	
+
+10.	Cuando ingreses al link podrás hacer todo lo que hiciste en el Paso 5, pero esta vez desde  cualquier parte del mundo.
+
+## Paso 9: Opcional – Probar las maravillas de CI/CD.
+
+1.	Ve a Cloud9.
+2.	En _**aws-recomendador-anime/app-recomendador/src/AppTopNavigation.json**_ modifica el valor de la línea 47 R_**ecomendador de Anime**_, por el texto que desees. 
+3.	Actualiza el repositorio de CodeCommit: 
 
 ```
-[{"name": "Drama","Filter ARN"}, 
-{"name": "Music", "Filter ARN"}, 
-{"name": "Sci-Fi", "Filter ARN"}, 
-{"name": "Shounen", "Filter ARN"}, 
-{"name": "Fantasy", "Filter ARN"}, 
-{"name": "Action", "Filter ARN"}, 
-{"name": "Comedy", "Filter ARN"}, 
-{"name": "Adventure", "Filter ARN"}, 
-{"name": "Kids", "Filter ARN"}]
+git add .
+git commit -m "probando la integracion continua"
+git push origen_new main
 ```
+4.	Ve a la [consola de AWS Amplify](https://console.aws.amazon.com/amplify), ingresa a tu aplicación y observa cómo se realiza un nuevo despliegue de tu aplicación, al finalizar recarga la página web y podrás ver el cambio. 
 
-El JSON final corresponde al valor de la variable de entorno **FILTERS**. 
-
-**CAMPAIGN_ARN:** siguiendo los mismos pasos que para obtener FILTERS, en el menú selecciona **Custom resources > Campaigns**, como en la Fig. 10, debe haber tres tipos de campañas, creadas en el Paso 1. 
-
-
-![Fig.9 Campañas en Amazon Personalize](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/8fuloysyokaii84z7cei.png) Fig.9 Campañas en Amazon Personalize.
-
-Ingresa a cada campaña, copia y pega el valor de ARN, este será el CAMPAIGN_ARN. Por ejemplo, el CAMPAIGN_ARN para la Función Lambda con nombre lambda_sims corresponde al de la Fig. 10.
-
-
-![Fig.10 Campaign ARN de campaña Sims en Amazon Personalize.](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/dbe1tlms7rs4ydtc1ich.png) Fig.10 Campaign ARN de campaña Sims en Amazon Personalize.
-
-
-
-**TRACKING_ID:** al igual que para FILTERS y CAMPAIGN_ARN, en el menú de la [consola de Amazon Personalize](https://us-east-1.console.aws.amazon.com/personalize/home?region=us-east-1&skipRegion=true#) selecciona **Event trackers**, ingresa al creado en el Paso 1 y copia el **Tracking ID** (Fig.11), el valor correspondiente a esta variable de entorno.
-
-
-
-![Fig.11 Tracking ID en Amazon Personalize.(https://dev-to-uploads.s3.amazonaws.com/uploads/articles/dfdfhryslexvis1ld9w3.png) Fig.11 Tracking ID en Amazon Personalize.
-
-
-### Paso 6: Creamos las Funciones Lambda. 
-
-En la consola de AWS Lambda, en la misma región donde crearte el proyecto del Paso 1.
-
-1.	Selecciona **Crear una función**, en esta página:
-
-  a.	Selecciona Crear desde cero.
-  b.	Nombre de la Función: El que corresponde en la tabla 
-2, por ejemplo, lambda_tracker. 
-  c.	Tiempo de ejecución: Python 3.8.
-  d.	Cambiar el rol de ejecución predeterminado
-
-    i.	Selecciona Uso de un rol existente. 
-    ii.	En Role existente selecciona el rol que corresponde al color de la Función Lambda, por ejemplo, role-verde.
- 
-2.	Deberías ver algo como la Fig. 12 para cada Función Lambda: 
-
-
-
-![Fig.12 Crear Función Lambda.(https://dev-to-uploads.s3.amazonaws.com/uploads/articles/lufanbbhszhedwqabzqj.png) Fig.12 Crear Función Lambda.
-
-
-4.	Selecciona Crear una función.
-
-A continuación, agregamos el código fuente y las variables de entorno. 
-
-Para agregar el [código fuente](https://github.com/aws-samples/aws-recomendador-anime/tree/main/api-recomendador/lambdas):
- 
-1.	En la [consola de Amazon Lambda](http://console.aws.amazon.com/lambda/home) selecciona el **Nombre de la función** a editar, por ejemplo, **lambda_tracker**. 
-2.	En el menú de la Función Lambda selecciona Código fuente, sobre-escribe el código en el cuadrado naranja de la Fig. 13 y pega el que corresponda, por ejemplo,  para  **lambda_tracker** sería el [codigo-tracker](https://github.com/aws-samples/aws-recomendador-anime/blob/main/api-recomendador/lambdas/tracker/lambda_function.py).
-
-
-![Fig.13 Código fuente de Función Lambda.(https://dev-to-uploads.s3.amazonaws.com/uploads/articles/y17vwtlayadke1yts488.png) Fig.13 Código fuente de Función Lambda.
-
-3.	Selecciona el botón **Deploy**.
-
-Para agregar las variables de entorno: 
-  a.	En el menú de la Función Lambda selecciona **Configuración**. 
-  b.	Selecciona **Variables de entorno -> Editar**. 
-  c.	Agrega las variables de entorno de la Tabla 2 para cada Función Lambda. Por ejemplo, para **lambda_tracker**:
-
-    i.	Clave: REGION - Valor: TU-REGIÓN
-    ii.	Clave: TRACKING_ID - Valor: Tracking ID en Amazon Personalize, obtenido en paso anterior. 
-
-4.	Selecciona **Guardar**, deberías ver algo similar a la Fig. 14.
-
-
-![Fig.14 Variables de entorno de Función Lambda lambda_tracker.](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/lsmbqgxtag8jnrks6akd.png) Fig.14 Variables de entorno de Función Lambda lambda_tracker.
-
-Repite este paso para todas las Funciones Lambda de la Tabla 2. 
-
-### Paso 7: Creamos una API REST en Amazon API Gateway.
-
-1.	Ingresa a la [consola de API Gateway](https://console.aws.amazon.com/apigateway)
-2.	Selecciona **Crear API**.
-3.	En **API REST (publica)**, selecciona **Crear**.
-4.	En protocolo selecciona **REST**, en **Crear API nueva** selecciona **API nueva** y en **Configuración** Nombra tu API, en nuestro caso como Recomendador-anime, por último, en **Tipo de enlace** selecciona **Optimizado para límites** (Fig. 15). 
-
-
-
-![Fig. 15 Configuración API Gateway.](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/fcjfx7keyeerv3ki1saw.png) Fig. 15 Configuración API Gateway.
-
-
-5.	Selecciona Crear API.
-
-### Paso 8: Creamos los métodos en Amazon API Gateway.
-
-Necesitamos crear seis APIs (Fig. 16), una para cada Función Lambda y que sea capaz de invocarlas de acuerdo a los métodos y recursos de la Tabla 3. 
-
-
-![Fig.16 APIs a crear en Amazon API Gateway.(https://dev-to-uploads.s3.amazonaws.com/uploads/articles/wkfl0hnqkc259115ge57.png) Fig.16 APIs a crear en Amazon API Gateway.
-
-
-![Tabla 3. Descripción configuración APIs.(https://dev-to-uploads.s3.amazonaws.com/uploads/articles/k01fbszib53v1bix9oj4.png) Tabla 3. Descripción configuración APIs.
-
-
-Las APIs con método GET te van a permitir invocar las funciones Lambdas para obtener información del modelo de recomendación y de la tabla anime_table de DynamoDB, y con el método POST vamos a poder alimentar el modelo de recomendaciones con nuevas interacciones de los usuarios. 
-
-Primero creamos los recursos:
-
-1.	Dentro de la API creada en el paso anterior, selecciona **Acciones** y luego **Crear recurso**. 
-
-a.	En nuevo recurso secundario, pegamos el Nombre del recurso de la Tabla 3, por ejemplo, para tracker (Fig. 17):  
-
-
-![Fig.17 Crear recurso tracker en Amazon API Gateway.](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/coyiaqw5s5wxja3n7uw1.png) Fig.17 Crear recurso tracker en Amazon API Gateway.
-
-
-b.	Selecciona **Crear Recurso**.
-
-2.	Dentro de los recursos creados anteriormente, debemos crear un recurso nuevo anidado, que será un dato con el que se invocará la función Lambda. Este sub-recurso corresponde a los valores de la columna **Ruta Recurso**, por ejemplo, para tracker (Fig. 18). 
-
-
-![Fig.18 Crear recurso dentro de tracker en Amazon API Gateway.(https://dev-to-uploads.s3.amazonaws.com/uploads/articles/m3ys09uclebhqfe1p7ke.png) Fig.18 Crear recurso dentro de tracker en Amazon API Gateway.
-
-
-3.	Repetir lo anterior para cada recurso de la Tabla 3.
-4.	Hasta el momento deberíamos estar viendo lo de la Fig. 19.
-
-
-![Fig. 19 Recursos de API Recomendador-anime(https://dev-to-uploads.s3.amazonaws.com/uploads/articles/olgku0va2jskaezoo2bc.png) Fig. 19 Recursos de API Recomendador-anime
-
-
-Para crear el método:
-
-1.	Selecciona el recurso al cual vamos a agregar el método, por ejemplo, para rerank seria {userId}. Luego ingresamos a **Acciones > Crear método** (Fig. 20).
-
-
-![Fig. 20 API Acciones > Crear método.(https://dev-to-uploads.s3.amazonaws.com/uploads/articles/htpa74quhhkci7tbb2gb.png) Fig. 20 API Acciones > Crear método.
-
-
-2.	En el nuevo menú (Fig. 21) selecciona **GET** o **POST**, de acuerdo a la Tabla 3, y luego selecciona el símbolo ✅ para aceptar. 
-
-
-
-![Fig. 21 Crear método.(https://dev-to-uploads.s3.amazonaws.com/uploads/articles/io90dt01n9bhjgx7svxx.png) Fig. 21 Crear método.
-
-3.	Selecciona el método creado e iniciamos su configuración: 
-
-a.	En **Tipo de integración**, seleccionamos [Función Lambda](https://docs.aws.amazon.com/es_es/apigateway/latest/developerguide/set-up-lambda-integrations.html). 
-b.	Marca la opción **Usar la** [integración de proxy Lambda](https://docs.aws.amazon.com/es_es/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html), que permite invocar una función Lambda en el backend.
-c.	En **Región Lambda**, selecciona la región donde creaste las funciones. 
-d.	En Función Lambda pon el nombre de la función, por ejemplo, **lambda_tracker**. 
-e.	Dejamos lo demás tal cual. 
-f.	Selecciona **Guardar**.
-g.	Aparecerá una ventana “Agregar permiso a la función Lambda”, selecciona **Aceptar**. Esto otorgará los permisos necesarios para que Amazon API Gateway pueda invocar a la función Lambda. 
-
-4.	De igual forma, debemos agregar el método **OPTIONS**, el cual configuramos con el **Tipo de integración** Simulación (Mock).
-5.	Repetir lo anterior para cada recurso de la Tabla 3.
-6.	Deberíamos ver lo de la Fig. 22.
-
-
-![Fig. 22 Recursos con métodos de API Recomendador-anime(https://dev-to-uploads.s3.amazonaws.com/uploads/articles/diwzkqonl6vwd3jwyymk.png) Fig. 22 Recursos con métodos de API Recomendador-anime
-
-
-### Paso 9: [Publicamos la API](https://docs.aws.amazon.com/es_es/apigateway/latest/developerguide/rest-api-publish.html) para que sea invocada desde una URL. 
-
-1.	Sobre la raíz de la **API /**. 
-2.	Selecciona **Acciones > Implementar la API**. 
-
-a.	En **Etapa de implementación** selecciona **[Nueva etapa]**.
-b.	**Nombre de la fase** escribe prod. 
-c.	Selecciona Implementación. 
-
-3.	Cuando finalice, selecciona **Etapas**. 
-4.	Despliega el contenido de **prod**.
-5.	Seleccionando cada método **GET/POST**, vas a ver el link con el cual invocar la API: **Invocar URL**.
-
-### Paso 10: Probamos la API.
-
-Ahora, solo nos queda jugar con la API en cualquier navegador, para eso debes tener el valor de **Invocar URL** para cada método obtenido en el paso anterior (Fig. 23). 
-
-
-![Fig. 23 API Recomendador-anime - Invocar URL(https://dev-to-uploads.s3.amazonaws.com/uploads/articles/sm76dhi1svj5us8dgdkt.png) Fig. 23 API Recomendador-anime - Invocar URL
-
-**Tracker:** 
-
-Para actualizar las preferencias por usuario. 
-
-```
-POST https://<event-tracker-api>/{userId}
-body 
-{
-    "itemId": (ITEM_ID con que se interactúa),
-    "eventType": (tipo de evento, ej: click, compra, view),
-    "eventValue": (valor del evento, de existir por ejemplo calificación),
-    "sessionId": (identificador de la sesión)
-}
-```
-
-sessionId: puedes generar un numero random, [acá](https://github.com/aws-samples/aws-recomendador-anime/blob/main/recomendador-de-anime/05_Probando_Recomendaciones.ipynb) te muestro como. En producción corresponde a la sesión de usuario.
-
-Ejemplo: Usuario userId = 20000 califica con nota = 9 una serie itemId = 199.
-
-Request: 
-
-```
-POST https://API-ID.execute-api.TU-REGION.amazonaws.com/20000
-body : 
-{
-    "itemId": "199",
-    "eventType": "RATING",
-    "eventValue": 9,
-    "sessionId": "96e5a75b-8c71-42ea-a0ad-d9c474c44422"
-}
-```
-
-Respuesta:
-
-```
-{
-    "data": {
-        "ResponseMetadata": {
-            "RequestId": "96e5a75b-8c71-42ea-a0ad-d9c474c44422",
-            "HTTPStatusCode": 200,
-            "HTTPHeaders": {
-                ...
-            },
-            "RetryAttempts": 0
-        }
-    }
-}
-```
-
-**Consultas GET: **
-
-En la Tabla 4 puedes ver como utilizarlas. 
-
-
-|Nombre|	Invocar URL |	Request |	Request con filtro |	Resultado |
-|  :---: |  :---: |  :---: |  :---: |  :---: |
-|sims	| https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/sims/{itemId} |	https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/sims/1000 | 	https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/sims/1000?filter=Shounen	| entrega un listado de 25 elementos similares al consultado |
-| rerank	| https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/-rerank/{userId} |	https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/-rerank/300?inputList=3000,3001,2500 |	https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/-rerank/300?inputList=3000,3001,2500&filter=Drama&numResults=10 |	Reordena items para usuario según orden de recomendación. |
-| personalization	| https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/personalization/{userId} |	https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/personalization/300 |	https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/personalization/300?filter=Shounen |	Recomienda 25 items del filtro para el usuario = userId |
-| get_anime	| https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/get_anime/{MAL_ID}| 	https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/get_anime/1000 | | 		Entrega la información del anime MAL_ID consultado. | 
-| search	| https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/search/search |	https://API-ID.execute-api.TU-REGION.amazonaws.com/prod/search/search?nombre=narut |		| Entrega un listado de la data de animes que contengan la palabra buscada en su nombre.| 
-
-
-### Paso 11: Borramos los recursos de la cuenta de AWS. 
+## Paso 10: Limpieza de recursos en la cuenta de AWS. 
 
 Estos pasos son opcionales, si tu intención es continuar con la construcción de la aplicación web, puedes mantener los recursos ya que los vamos a utilizar en el próximo episodio de esta serie.
 
 De lo contrario, sigue los siguientes pasos:
 
-1.	**Borrar recursos en API Gateway:** En la [consola de API Gateway](https://console.aws.amazon.com/apigateway), selecciona la API y en Acciones seleccionar **Delete**.
-2.	**Borrar funciones Lambda:** En la [consola de AWS Lambda](https://console.aws.amazon.com/lambda/), selecciona las funciones Lambda a borrar y en **Acciones** selecciona **Eliminar**. 
-3.	**Borrar Tabla de DynamoDB:** En la [consola de Amazon DynamoDB](https://console.aws.amazon.com/dynamodb/) selecciona Tabla a borrar y luego selecciona **Eliminar**. 
-4.	**Borrar AWS IAM Role:** en la consola de AWS IAM en el menú de la izquierda selecciona Roles, y pega en el buscador el nombre del role que copiaste en el paso anterior, presiona la tecla **Enter**, selecciónalo y luego **Eliminar**.
-
----
+1.	**Borrar recursos en AWS Amplify**: En la [consola de Amplify](https://console.aws.amazon.com/amplify), ingresa a tu aplicación y en Acciones selecciona **Eliminar la aplicación**.
+2.	**Borrar el repositorio en AWS CodeCommit**: En la [consola de CodeCommit](https://console.aws.amazon.com/codesuite/codecommit/home) ve Repositorios, selecciona el repositorio recomendador-anime y luego en **Eliminar el repositorio**.
+3.	**Borrar el ambiente virtual de AWS Cloud9:** En la [consola de Cloud9](https://console.aws.amazon.com/cloud9/) ve a **Environments**, selecciona el ambiente y luego **Delete**.
 
 
-## Conclusiones: 
+## Conclusiones
 
-En este nuevo episodio desbloqueaste una nueva habilidad: Creación de API REST para consultar de forma segura y escalable el recomendador de anime creado en el [episodio anterior](https://aws.amazon.com/es/blogs/aws-spanish/como-crear-un-modelo-de-recomendacion-basado-en-machine-learning/). 
+Ahora ya tienes una aplicación web que te permite recibir una experiencia personalizada de recomendaciones de animes nuevos de la preferencia del usuario. Además, la aplicación está preparada para entrenarse con tus gustos calificando animes y así te entregue recomendaciones cada vez más relevantes.
 
-Empleamos el servicio **Amazon API Gateway** para crear recursos y métodos que invocan las funciones de **AWS Lambda** con el código para consultar a ** Amazon Personalize**, y las respuesta recibidas las complementamos con la información general de los animes que almacenamos en **Amazon DynamoDB**, como resultado obtuvimos un JSON con la información completa de los animes recomendados. 
+En este episodio desbloqueaste nuevas habilidades: exploraste la posibilidad de crear aplicaciones web de forma modular utilizando los componentes listos para utilizar de CloudScape, aprendiste a trabajar en un ambiente virtual de AWS Cloud9, a crear un repositorio en AWS CodeCommit y a emplearlo en el despliegue de la aplicación en AWS Amplify aprovechando las ventajas del CI/CD. 
 
-Además, creamos una API método POST al Event Tracker, que te permitirá alimentar al modelo de recomendaciones con nuevas interacciones a animes, y así entrenarlo para que entregue recomendaciones personalizadas al usuario que lo utilice. 
+Pero este no es el final, aun te falta:
+•	Incorporar un pool de usuarios a una aplicación web.
+•	Analizar el comportamiento de una aplicación web mediante un dashboard. 
+Te dejos estos recursos para que sigas aprendiendo de las herramientas utilizadas: 
 
-Te invito a continuar experimentando con estos servicios y seguir creando aplicaciones para que sigas desbloqueando nuevas habilidades. En [Amazon API Gateway tutorials and workshops](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-tutorials.html) puedes conseguir nuevos proyectos. 
+-	[Implementar una aplicación web en AWS Amplify.](https://aws.amazon.com/es/getting-started/guides/deploy-webapp-amplify/)
+-	[Configuración de dominios personalizados con AWS Amplify.](https://docs.aws.amazon.com/es_es/amplify/latest/userguide/custom-domains.html)
+-	[Amplify Immersion Day Workshop](https://catalog.us-east-1.prod.workshops.aws/workshops/84db0afb-0279-4d29-ae26-1609043d5bfd/en-US)
+-	[Crear una aplicación móvil en la nube](https://aws.amazon.com/es/developer/learning/lets-build-mobile/)
+-	[WorkShop de Static Web](https://webapp.serverlessworkshops.io/setup/)
+-	[Build a cloud experience with Cloudscape Design System 🚀](https://catalog.us-east-1.prod.workshops.aws/workshops/5b7fe737-7ea2-4c4d-b572-76df6adabd47/en-US)
+-	[Build on AWS Weekly - S1 E2 - Breaking Blocks with Terraform](https://dev.to/aws/build-on-aws-weekly-s1-e2-breaking-blocks-with-terraform-4dlb)
+-	[WorkShops de AWS CodeCommit](https://awsworkshop.io/tags/codecommit/)
 
-Pronto una nueva entrega de Recomendaciones personalizadas de Anime para que terminemos nuestra aplicación web de recomendaciones de anime.  
 
 ___
 ___
